@@ -1,104 +1,97 @@
 package com.example.wokolskidashboard.ui.components
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun ExpenseForm(
-    name: String,
-    amount: String,
-    isOptional: Boolean,
-    category: String,
-    onNameChange: (String) -> Unit,
-    onAmountChange: (String) -> Unit,
-    onOptionalChange: (Boolean) -> Unit,
-    onCategoryChange: (String) -> Unit,
-    onSave: () -> Unit
+    onAddExpense: (String, Double) -> Unit
 ) {
-    Column(modifier = Modifier.padding(8.dp)) {
-        Text("Wydatek", style = MaterialTheme.typography.titleMedium)
+    var name by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("") }
 
-        Spacer(Modifier.height(4.dp))
+    var nameError by remember { mutableStateOf("") }
+    var amountError by remember { mutableStateOf("") }
 
-        WokolskiTextField(
+    Column {
+
+        // 🔹 NAZWA
+        OutlinedTextField(
             value = name,
-            onValueChange = onNameChange,
-            label = "Cel wydatku",
+            onValueChange = {
+                name = it
+                nameError = ""
+            },
+            label = { Text("Cel wydatku") },
+            isError = nameError.isNotEmpty(),
+            supportingText = {
+                Text(if (nameError.isNotEmpty()) nameError else " ")
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        WokolskiTextField(
+        // 🔹 KWOTA
+        OutlinedTextField(
             value = amount,
-            onValueChange = onAmountChange,
-            label = "Kwota (rub.)",
+            onValueChange = {
+                amount = it
+                amountError = ""
+            },
+            label = { Text("Kwota") },
+            isError = amountError.isNotEmpty(),
+            supportingText = {
+                Text(if (amountError.isNotEmpty()) amountError else " ")
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
+        // 🔹 BUTTON
+        Button(
+            onClick = {
+                val value = amount.toDoubleOrNull()
 
-        Text(
-            "Kategoria",
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+                var isValid = true
 
-        val categories = listOf("Sklep", "Kamienica", "Wydatki osobiste")
-
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            categories.forEach { item ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                ) {
-                    RadioButton(
-                        selected = category == item,
-                        onClick = { onCategoryChange(item) },
-
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = Color(0xFF2E7D32)
-                        )
-                    )
-                    Text(text = item)
+                if (name.isBlank()) {
+                    nameError = "Wymagane pole"
+                    isValid = false
                 }
-            }
-        }
 
-        Spacer(Modifier.height(4.dp))
+                if (value == null) {
+                    amountError = "Podaj liczbę"
+                    isValid = false
+                } else if (value <= 0) {
+                    amountError = "Musi być > 0"
+                    isValid = false
+                }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Wydatek zbyteczny")
-            Switch(
-                checked = isOptional,
-                onCheckedChange = onOptionalChange,
+                if (isValid && value != null) {
+                    onAddExpense(name, value)
 
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF2E7D32)
-                )
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        WokolskiButton(
-            onClick = onSave,
-            text = "Zapisz wydatek",
+                    // reset
+                    name = ""
+                    amount = ""
+                }
+            },
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Text("Dodaj wydatek")
+        }
     }
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.wokolskidashboard.model.Transaction
+import com.example.wokolskidashboard.ui.components.ExpenseForm
 import com.example.wokolskidashboard.ui.components.IncomeForm
 import com.example.wokolskidashboard.ui.components.TransactionCard
 
@@ -71,16 +72,14 @@ fun MainScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                Text("Zysk")
+                Text("Przychód")
 
                 Switch(
                     checked = isExpenseMode,
-                    onCheckedChange = {
-                        isExpenseMode = false // nadal blokada
-                    }
+                    onCheckedChange = { isExpenseMode = it }
                 )
 
-                Text("Koszt (wkrótce)")
+                Text("Wydatek")
             }
         }
 
@@ -94,14 +93,18 @@ fun MainScreen() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        IncomeForm { name, amount ->
-            transactions.add(
-                Transaction(
-                    name = name,
-                    amount = amount,
-                    isExpense = false
+        if (isExpenseMode) {
+            ExpenseForm { name, amount ->
+                transactions.add(
+                    Transaction(name, amount, true)
                 )
-            )
+            }
+        } else {
+            IncomeForm { name, amount ->
+                transactions.add(
+                    Transaction(name, amount, false)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(20.dp))
 
