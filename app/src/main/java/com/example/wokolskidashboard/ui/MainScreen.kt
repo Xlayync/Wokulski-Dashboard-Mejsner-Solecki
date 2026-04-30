@@ -1,96 +1,122 @@
 package com.example.wokolskidashboard.ui
-
-
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.wokolskidashboard.model.Transaction
-import com.example.wokolskidashboard.ui.components.BalanceHeader
-import com.example.wokolskidashboard.ui.components.ExpenseForm
 import com.example.wokolskidashboard.ui.components.IncomeForm
 import com.example.wokolskidashboard.ui.components.TransactionCard
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
-    val transactions = remember { mutableStateListOf<Transaction>() }
-    var incomeName by rememberSaveable { mutableStateOf("") }
-    var incomeAmount by rememberSaveable { mutableStateOf("") }
-    var expenseName by rememberSaveable { mutableStateOf("") }
-    var expenseAmount by rememberSaveable { mutableStateOf("") }
-    var expenseOptional by rememberSaveable { mutableStateOf(false) }
-    var expenseCategory by rememberSaveable { mutableStateOf("Sklep") }
+fun MainScreen() {
 
-    val balance = transactions.sumOf { tx ->
-        if (tx.isExpense) -tx.amount else tx.amount
+    val transactions = remember { mutableStateListOf<Transaction>() }
+
+    val balance = transactions.sumOf {
+        if (it.isExpense) -it.amount else it.amount
     }
 
+    var isExpenseMode by remember { mutableStateOf(false) }
+
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .padding(16.dp)
             .fillMaxSize()
-            .padding(4.dp)
     ) {
-        BalanceHeader(balance = balance)
 
-        IncomeForm(
-            name = incomeName,
-            amount = incomeAmount,
-            onNameChange = { incomeName = it },
-            onAmountChange = { incomeAmount = it },
-            onSave = {
-                val amountDouble = incomeAmount.toDoubleOrNull()
-                if (incomeName.isBlank() || amountDouble == null || amountDouble <= 0.0) return@IncomeForm
+        // 🔹 SALDO (bardziej "card look")
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Saldo",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = "%.2f rubli".format(balance),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
+        }
 
-                transactions.add(
-                    Transaction(
-                        name = incomeName.trim(),
-                        amount = amountDouble,
-                        isExpense = false,
-                    )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 🔹 WYBÓR TRYBU
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Text("Zysk")
+
+                Switch(
+                    checked = isExpenseMode,
+                    onCheckedChange = {
+                        isExpenseMode = false // nadal blokada
+                    }
                 )
 
-                incomeName = ""
-                incomeAmount = ""
+                Text("Koszt (wkrótce)")
             }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 🔹 FORMULARZ
+        Text(
+            text = "Dodaj transakcję",
+            style = MaterialTheme.typography.titleMedium
         )
 
-        ExpenseForm(
-            name = expenseName,
-            amount = expenseAmount,
-            isOptional = expenseOptional,
-            category = expenseCategory,
-            onNameChange = { expenseName = it},
-            onAmountChange = { expenseAmount = it},
-            onOptionalChange = { expenseOptional = it},
-            onCategoryChange = { expenseCategory = it},
-            onSave = {
-                val amountDouble = expenseAmount.toDoubleOrNull()
-                if(expenseName.isBlank() || amountDouble == null || amountDouble <=0.0) return@ExpenseForm
+        Spacer(modifier = Modifier.height(8.dp))
 
-                transactions.add(
-                    Transaction(
-                        name = expenseName,
-                        amount = amountDouble,
-                        isExpense = true,
-                        category = expenseCategory,
-                        isOptional = expenseOptional
-                    )
+        IncomeForm { name, amount ->
+            transactions.add(
+                Transaction(
+                    name = name,
+                    amount = amount,
+                    isExpense = false
                 )
-                expenseName = ""
-                expenseAmount = ""
-                expenseOptional = false
-                expenseCategory = "Sklep"
-            }
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 🔥 LISTA TRANSAKCJI
+        Text(
+            text = "Historia",
+            style = MaterialTheme.typography.titleMedium
         )
 
-        LazyColumn(modifier = Modifier.padding(top = 8.dp)) {
-            items(transactions) { tx ->
-                TransactionCard(transaction = tx)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyColumn {
+            items(transactions.size) { index ->
+                val transaction = transactions[index]
+                TransactionCard(transaction)
             }
         }
     }
